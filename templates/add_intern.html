@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Add Intern - Intern Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header bg-transparent">
+                <h3 class="mb-0">
+                    <i class="fas fa-user-plus me-2"></i>Add New Intern
+                </h3>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">
+                                <i class="fas fa-user me-1"></i>Full Name
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   placeholder="Enter intern's full name" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>Email Address
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   placeholder="Enter intern's email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="joining_date" class="form-label">
+                                <i class="fas fa-calendar-plus me-1"></i>Joining Date
+                            </label>
+                            <input type="date" class="form-control" id="joining_date" name="joining_date" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="end_date" class="form-label">
+                                <i class="fas fa-calendar-minus me-1"></i>End Date
+                            </label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left me-1"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Add Intern
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Information Card -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>Information
+                </h5>
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success me-2"></i>All fields are required</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Email will be used to send certificates</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Interns start with 'Pending' status</li>
+                    <li><i class="fas fa-check text-success me-2"></i>You can approve/reject from the dashboard</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set minimum date for joining_date to today
+document.getElementById('joining_date').min = new Date().toISOString().split('T')[0];
+
+// Ensure end_date is after joining_date
+document.getElementById('joining_date').addEventListener('change', function() {
+    document.getElementById('end_date').min = this.value;
+});
+
+document.getElementById('end_date').addEventListener('change', function() {
+    const joiningDate = document.getElementById('joining_date').value;
+    if (this.value <= joiningDate) {
+        alert('End date must be after joining date');
+        this.value = '';
+    }
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Intern Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-transparent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Intern Management Dashboard
+                    </h3>
+                    <a href="{{ url_for('add_intern') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add New Intern
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if interns %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th><i class="fas fa-user me-1"></i>Name</th>
+                                <th><i class="fas fa-envelope me-1"></i>Email</th>
+                                <th><i class="fas fa-calendar-plus me-1"></i>Joining Date</th>
+                                <th><i class="fas fa-calendar-minus me-1"></i>End Date</th>
+                                <th><i class="fas fa-info-circle me-1"></i>Status</th>
+                                <th><i class="fas fa-certificate me-1"></i>Certificate</th>
+                                <th><i class="fas fa-cogs me-1"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for intern in interns %}
+                            <tr>
+                                <td>
+                                    <strong>{{ intern.name }}</strong>
+                                </td>
+                                <td>
+                                    <a href="mailto:{{ intern.email }}" class="text-decoration-none">
+                                        {{ intern.email }}
+                                    </a>
+                                </td>
+                                <td>{{ intern.joining_date.strftime('%B %d, %Y') }}</td>
+                                <td>{{ intern.end_date.strftime('%B %d, %Y') }}</td>
+                                <td>
+                                    {% if intern.status == 'pending' %}
+                                        <span class="status-pending">
+                                            <i class="fas fa-clock me-1"></i>Pending
+                                        </span>
+                                    {% elif intern.status == 'approved' %}
+                                        <span class="status-approved">
+                                            <i class="fas fa-check me-1"></i>Approved
+                                        </span>
+                                    {% elif intern.status == 'rejected' %}
+                                        <span class="status-rejected">
+                                            <i class="fas fa-times me-1"></i>Rejected
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if intern.certificate_sent %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Sent
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-clock me-1"></i>Not Sent
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        {% if intern.status == 'pending' %}
+                                            <a href="{{ url_for('approve_intern', intern_id=intern.id) }}" 
+                                               class="btn btn-success btn-sm"
+                                               onclick="return confirm('Are you sure you want to approve this intern?')">
+                                                <i class="fas fa-check me-1"></i>Approve
+                                            </a>
+                                            <a href="{{ url_for('reject_intern', intern_id=intern.id) }}" 
+                                               class="btn btn-danger btn-sm"
+                                               onclick="return confirm('Are you sure you want to reject this intern?')">
+                                                <i class="fas fa-times me-1"></i>Reject
+                                            </a>
+                                        {% elif intern.status == 'approved' %}
+                                            <a href="{{ url_for('download_certificate', intern_id=intern.id) }}" 
+                                               class="btn btn-primary btn-sm">
+                                                <i class="fas fa-download me-1"></i>Download Certificate
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No interns found</h4>
+                    <p class="text-muted">Start by adding your first intern to the system.</p>
+                    <a href="{{ url_for('add_intern') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add First Intern
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                <h4>{{ interns|length }}</h4>
+                <p class="text-muted mb-0">Total Interns</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                <h4>{{ interns|selectattr('status', 'equalto', 'pending')|list|length }}</h4>
+                <p class="text-muted mb-0">Pending</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-check fa-2x text-success mb-2"></i>
+                <h4>{{ interns|selectattr('status', 'equalto', 'approved')|list|length }}</h4>
+                <p class="text-muted mb-0">Approved</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-certificate fa-2x text-info mb-2"></i>
+                <h4>{{ interns|selectattr('certificate_sent', 'equalto', true)|list|length }}</h4>
+                <p class="text-muted mb-0">Certificates Sent</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
