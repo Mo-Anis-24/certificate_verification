@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verify Certificate</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Verify Certificate</h1>
+      <form id="verifyForm" class="card">
+        <label>Certificate ID
+          <input type="text" name="id" placeholder="Paste unique ID here" required />
+        </label>
+        <button type="submit">Verify</button>
+      </form>
+      <div id="result" class="card" style="display:none;"></div>
+      <p><a href="/">Back to Home</a></p>
+    </div>
+    <script>
+      const form = document.getElementById('verifyForm');
+      const result = document.getElementById('result');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = new FormData(form).get('id');
+        const res = await fetch(`/api/verify/${encodeURIComponent(id)}`);
+        const data = await res.json();
+        result.style.display = 'block';
+        if (data.valid) {
+          const c = data.certificate;
+          result.innerHTML = `
+            <h2>Certificate is Valid ✅</h2>
+            <p><strong>ID:</strong> ${c.id}</p>
+            <p><strong>Recipient:</strong> ${c.recipientName}</p>
+            <p><strong>Course:</strong> ${c.courseName}</p>
+            <p><strong>Issued:</strong> ${c.issueDate}</p>
+            <img src="${c.qrCodeDataUrl}" alt="QR Code" style="max-width: 200px;" />
+            <p><a href="/verify?id=${encodeURIComponent(c.id)}" target="_blank">Open verification page</a></p>
+          `;
+        } else {
+          result.textContent = 'Certificate not found or invalid.';
+        }
+      });
+    </script>
+  </body>
+</html>

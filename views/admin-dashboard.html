@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Create Certificate</h1>
+      <form id="certForm" class="card">
+        <label>Recipient Name
+          <input type="text" name="recipientName" required />
+        </label>
+        <label>Course Name
+          <input type="text" name="courseName" required />
+        </label>
+        <label>Issue Date
+          <input type="date" name="issueDate" />
+        </label>
+        <button type="submit">Generate Certificate</button>
+      </form>
+      <div id="result" class="card" style="display:none;"></div>
+      <p><a href="/">Back to Home</a></p>
+    </div>
+    <script>
+      const form = document.getElementById('certForm');
+      const result = document.getElementById('result');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const payload = Object.fromEntries(formData.entries());
+        const res = await fetch('/api/certificates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          const c = data.certificate;
+          result.style.display = 'block';
+          result.innerHTML = `
+            <h2>Certificate Created</h2>
+            <p><strong>ID:</strong> ${c.id}</p>
+            <p><strong>Recipient:</strong> ${c.recipient_name}</p>
+            <p><strong>Course:</strong> ${c.course_name}</p>
+            <p><strong>Issued:</strong> ${c.issue_date}</p>
+            <img src="${c.qr_png_data_url}" alt="QR Code" style="max-width: 200px;" />
+            <p><a href="/verify?id=${encodeURIComponent(c.id)}" target="_blank">Open verification page</a></p>
+          `;
+        } else {
+          result.style.display = 'block';
+          result.textContent = (data && data.error) || 'Failed to create certificate';
+        }
+      });
+    </script>
+  </body>
+</html>
