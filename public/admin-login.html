@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Admin Login</h1>
+      <form id="loginForm" class="card">
+        <label>Username
+          <input type="text" name="username" required />
+        </label>
+        <label>Password
+          <input type="password" name="password" required />
+        </label>
+        <button type="submit">Login</button>
+        <p id="error" class="error" style="display:none;"></p>
+      </form>
+      <p><a href="/">Back to Home</a></p>
+    </div>
+    <script>
+      const form = document.getElementById('loginForm');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const payload = Object.fromEntries(formData.entries());
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          window.location.href = '/admin/dashboard';
+        } else {
+          const err = document.getElementById('error');
+          err.textContent = (data && data.error) || 'Login failed';
+          err.style.display = 'block';
+        }
+      });
+    </script>
+  </body>
+</html>
