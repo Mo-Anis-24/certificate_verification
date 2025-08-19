@@ -11,9 +11,11 @@
                     <h3 class="mb-0">
                         <i class="fas fa-users me-2"></i>Intern Management Dashboard
                     </h3>
-                    <a href="{{ url_for('add_intern') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Add New Intern
-                    </a>
+                    <div>
+                        <a href="{{ url_for('add_intern') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add New Intern
+                        </a>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -24,24 +26,26 @@
                             <tr>
                                 <th><i class="fas fa-user me-1"></i>Name</th>
                                 <th><i class="fas fa-envelope me-1"></i>Email</th>
+                                <th><i class="fas fa-book me-1"></i>Subject</th>
                                 <th><i class="fas fa-calendar-plus me-1"></i>Joining Date</th>
                                 <th><i class="fas fa-calendar-minus me-1"></i>End Date</th>
                                 <th><i class="fas fa-info-circle me-1"></i>Status</th>
                                 <th><i class="fas fa-certificate me-1"></i>Certificate</th>
+                                <!-- New column for Verification ID -->
+                                <th><i class="fas fa-key me-1"></i>Verification ID</th>
                                 <th><i class="fas fa-cogs me-1"></i>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for intern in interns %}
                             <tr>
-                                <td>
-                                    <strong>{{ intern.name }}</strong>
-                                </td>
+                                <td><strong>{{ intern.name }}</strong></td>
                                 <td>
                                     <a href="mailto:{{ intern.email }}" class="text-decoration-none">
                                         {{ intern.email }}
                                     </a>
                                 </td>
+                                <td><span class="badge bg-info">{{ intern.subject }}</span></td>
                                 <td>{{ intern.joining_date.strftime('%B %d, %Y') }}</td>
                                 <td>{{ intern.end_date.strftime('%B %d, %Y') }}</td>
                                 <td>
@@ -68,6 +72,14 @@
                                         <span class="badge bg-secondary">
                                             <i class="fas fa-clock me-1"></i>Not Sent
                                         </span>
+                                    {% endif %}
+                                </td>
+                                <!-- Verification ID display -->
+                                <td>
+                                    {% if intern.verification_id %}
+                                        <span class="badge bg-dark">{{ intern.verification_id }}</span>
+                                    {% else %}
+                                        <span class="text-muted">Not Generated</span>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -151,4 +163,3 @@
     </div>
 </div>
 {% endblock %}
-

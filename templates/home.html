@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-11 col-lg-10">
+    <div class="card p-5" style="background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(245,245,255,0.9));">
+      <div class="row align-items-center g-4">
+        <div class="col-md-6">
+          <h1 class="fw-bold mb-3">Verify Certificates Instantly</h1>
+          <p class="text-muted mb-4">Enter the Verification ID from your certificate to confirm authenticity. No login required.</p>
+          <form method="POST" action="{{ url_for('verify') }}" class="mb-3">
+            <div class="input-group input-group-lg">
+              <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
+              <input type="text" name="verification_id" class="form-control" placeholder="Enter Verification ID" required>
+              <button class="btn btn-success" type="submit"><i class="fas fa-search me-1"></i>Verify</button>
+            </div>
+          </form>
+          <small class="text-muted">Tip: The Verification ID is printed on the top-right of your certificate.</small>
+          {% if details is not none %}
+          <div class="mt-4">
+            {% if details %}
+            <div class="alert alert-success">
+              <h5 class="mb-2">Certificate found</h5>
+              <ul class="mb-0">
+                <li><strong>Name:</strong> {{ details.name }}</li>
+                <li><strong>Email:</strong> {{ details.email }}</li>
+                {% if details.subject %}
+                <li><strong>Program:</strong> {{ details.subject }}</li>
+                {% endif %}
+                {% if details.course %}
+                <li><strong>Course:</strong> {{ details.course }}</li>
+                {% endif %}
+                <li><strong>Joining:</strong> {{ details.joining_date }}</li>
+                <li><strong>End:</strong> {{ details.end_date }}</li>
+                <li><strong>Status:</strong> {{ details.status }}</li>
+              </ul>
+            </div>
+            {% else %}
+            <div class="alert alert-danger">No certificate found for the given Verification ID.</div>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        <div class="col-md-6 text-center">
+          <i class="fas fa-shield-alt fa-5x text-primary mb-3"></i>
+          <h4 class="fw-semibold">Admin Access</h4>
+          <p class="text-muted">Admins can manage Intern and Trainee certificates.</p>
+          <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg"><i class="fas fa-user-lock me-2"></i>Admin Login</a>
+        </div>
+      </div>
+
+      <hr class="my-5"/>
+      <div class="row g-4 text-center">
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <h4 class="card-title"><i class="fas fa-briefcase me-2"></i>Interns</h4>
+              <p class="card-text text-muted">Manage internships, approvals, and certificates.</p>
+              <a href="{{ url_for('login') }}" class="btn btn-outline-primary">Go to Interns</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <h4 class="card-title"><i class="fas fa-user-graduate me-2"></i>Trainees</h4>
+              <p class="card-text text-muted">Manage trainees, approvals, and certificates.</p>
+              <a href="{{ url_for('login') }}" class="btn btn-outline-success">Go to Trainees</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+ 
+
+
+
+
+

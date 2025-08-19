@@ -1,0 +1,16 @@
+<form method="POST">
+    <input type="text" name="verification_id" placeholder="Enter Verification ID" required>
+    <button type="submit">Verify</button>
+</form>
+
+{% if details %}
+    <h3>Verification Details</h3>
+    <p><strong>Name:</strong> {{ details.name }}</p>
+    <p><strong>Email:</strong> {{ details.email }}</p>
+    <p><strong>Subject:</strong> {{ details.subject }}</p>
+    <p><strong>Joining Date:</strong> {{ details.joining_date }}</p>
+    <p><strong>End Date:</strong> {{ details.end_date }}</p>
+    <p><strong>Status:</strong> {{ details.status }}</p>
+{% elif details is not none %}
+    <p style="color:red;">Invalid Verification ID</p>
+{% endif %}

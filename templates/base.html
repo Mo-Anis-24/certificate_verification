@@ -70,22 +70,26 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ url_for('dashboard') }}">
+            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
                 <i class="fas fa-graduation-cap me-2"></i>Intern Management
             </a>
-            {% if current_user.is_authenticated %}
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('dashboard') }}">
-                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-home me-1"></i>Home
                 </a>
-                <a class="nav-link" href="{{ url_for('add_intern') }}">
-                    <i class="fas fa-plus me-1"></i>Add Intern
+                <a class="nav-link" href="{{ url_for('verify') }}">
+                    <i class="fas fa-check me-1"></i>Verify
                 </a>
+                {% if current_user.is_authenticated %}
                 <a class="nav-link" href="{{ url_for('logout') }}">
                     <i class="fas fa-sign-out-alt me-1"></i>Logout
                 </a>
+                {% else %}
+                <a class="nav-link" href="{{ url_for('login') }}">
+                    <i class="fas fa-user-lock me-1"></i>Admin Login
+                </a>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </nav>
 
