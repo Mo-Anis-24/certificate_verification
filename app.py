@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from PIL import Image
 from io import BytesIO
 from reportlab.pdfgen import canvas
@@ -61,13 +61,30 @@ class Trainee(db.Model):
 def load_user(user_id):
     return Admin.query.get(int(user_id))
 
-# -------- Certificate Generator (ALL TEXT REMOVED) --------
+
 def generate_certificate(intern):
     """
     Generate a certificate PDF by drawing the intern's name and details
     onto the certificate template image.
     """
-    template_path = os.path.join('static', 'demoooooo.png')
+    # Determine certificate type and select appropriate template
+    is_trainee = hasattr(intern, 'course') and not hasattr(intern, 'subject')
+    if is_trainee:
+        # Prefer correct trainee template name, then legacy misspelling, then older name, then default
+        candidate_templates = ['trainee.png', 'tarinee.png', 'training.png', 'demoooooo.png']
+    else:
+        candidate_templates = ['demoooooo.png']
+
+    # Pick the first existing template from the candidates
+    template_path = None
+    for fname in candidate_templates:
+        path = os.path.join('static', fname)
+        if os.path.exists(path):
+            template_path = path
+            break
+    if template_path is None:
+        # As an ultimate fallback, use demoooooo.png path even if missing
+        template_path = os.path.join('static', 'demoooooo.png')
 
     # Load template to get dimensions
     template_image = Image.open(template_path).convert("RGB")
@@ -93,13 +110,14 @@ def generate_certificate(intern):
     subject_text = getattr(intern, 'subject', None) or getattr(intern, 'course', '')
     start_text = format_date_with_ordinal(intern.joining_date)
     end_text = format_date_with_ordinal(intern.end_date)
-    is_trainee = hasattr(intern, 'course') and not hasattr(intern, 'subject')
-    line1 = "for successfully completing the"
+    # is_trainee already determined above
     if is_trainee:
-        # Trainee certificate wording (training completion)
-        line2 = f"Broaderai Training Program in {subject_text} hosted from"
+        # Trainee requested wording
+        line1 = "For his achievements in participating in the 2025"
+        line2 = f"{subject_text} Training activities"
     else:
         # Intern certificate wording (internship completion)
+        line1 = "for successfully completing the"
         line2 = f"Broaderai Internship Program for 2 credits with {subject_text} hosted from"
     line3 = f"{start_text} to {end_text}"
 
@@ -112,10 +130,13 @@ def generate_certificate(intern):
 
     pdf.setFillColorRGB(*text_color_rgb)
 
+    # Horizontal centering: shift intern text slightly to the right, trainees stay centered
+    center_x = (img_width / 2) + (130 if not is_trainee else 0)
+
     # Center helper
     def draw_centered(text: str, y: float, font_name: str, font_size: int):
         pdf.setFont(font_name, font_size)
-        pdf.drawCentredString(img_width / 1.8 + 50, y, text)
+        pdf.drawCentredString(center_x, y, text)
 
     # Fit helper: reduce font size until line fits max width
     def fit_font_size_for_line(text: str, font_name: str, starting_size: int, max_width: float, min_size: int = 16) -> int:
@@ -144,7 +165,7 @@ def generate_certificate(intern):
 
     # Draw underline beneath the name, centered with the same horizontal offset
     name_text_width = pdf.stringWidth(intern.name, name_font, name_size)
-    center_x = img_width / 1.8 + 50
+    # center_x already set above
     underline_length = min(name_text_width + 40, max_text_width)
     underline_y = name_y - name_size * 0.25
     pdf.setStrokeColorRGB(*text_color_rgb)
@@ -168,44 +189,50 @@ def generate_certificate(intern):
     draw_centered(wish_text, current_y, body_font, wish_size)
 
     # Optionally add verification id if present (small footer text)
-    # Add clickable verification URL above founder area
-    try:
-        verify_url = url_for('index', _external=True)
-    except Exception:
-        verify_url = '/'
-    url_center_x = img_width / 1.9 - 10  # moved further left
-    link_text = f"Verify at: {verify_url}"
-    link_font_size = min(
-        uniform_body_size,
-        fit_font_size_for_line(link_text, body_font, uniform_body_size, max_text_width)
-    )
-    url_y = img_height * 0.10  # moved further down near the line
-    pdf.setFont(body_font, link_font_size)
-    pdf.drawCentredString(url_center_x, url_y, link_text)
-    text_width = pdf.stringWidth(link_text, body_font, link_font_size)
-    pdf.linkURL(
-        verify_url,
-        (
-            url_center_x - text_width / 2,
-            url_y - 2,
-            url_center_x + text_width / 2,
-            url_y + link_font_size + 2,
-        ),
-        relative=0,
-    )
+    # Add clickable verification URL above founder area (only for interns)
+    if not is_trainee:
+        try:
+            verify_url = url_for('index', _external=True)
+        except Exception:
+            verify_url = '/'
+        url_center_x = img_width / 2
+        link_text = f"Verify at: {verify_url}"
+        link_font_size = min(
+            uniform_body_size,
+            fit_font_size_for_line(link_text, body_font, uniform_body_size, max_text_width)
+        )
+        url_y = img_height * 0.10
+        pdf.setFont(body_font, link_font_size)
+        pdf.drawCentredString(url_center_x, url_y, link_text)
+        text_width = pdf.stringWidth(link_text, body_font, link_font_size)
+        pdf.linkURL(
+            verify_url,
+            (
+                url_center_x - text_width / 2,
+                url_y - 2,
+                url_center_x + text_width / 2,
+                url_y + link_font_size + 2,
+            ),
+            relative=0,
+        )
 
-    # Draw Verification ID at top-right corner
+    # Draw Verification ID (intern: top-right; trainee: bottom-left)
     if intern.verification_id:
         id_text = f"Verification ID: {intern.verification_id}"
         id_font_size = min(
             uniform_body_size,
             fit_font_size_for_line(id_text, body_font, uniform_body_size, max_text_width)
         )
-        right_margin = img_width * 0.04
-        id_y = img_height * 0.92
         pdf.setFont(body_font, id_font_size)
         id_text_width = pdf.stringWidth(id_text, body_font, id_font_size)
-        pdf.drawString(img_width - right_margin - id_text_width, id_y, id_text)
+        if is_trainee:
+            left_margin = img_width * 0.04
+            id_y = img_height * 0.08
+            pdf.drawString(left_margin, id_y, id_text)
+        else:
+            right_margin = img_width * 0.04
+            id_y = img_height * 0.92
+            pdf.drawString(img_width - right_margin - id_text_width, id_y, id_text)
 
     pdf.showPage()
     pdf.save()
@@ -255,7 +282,10 @@ def login():
             return redirect(url_for('choose_panel'))
         else:
             flash('Invalid username or password')
-    return render_template('login.html')
+    
+    # Check if any admin exists
+    admin_exists = Admin.query.first() is not None
+    return render_template('login.html', admin_exists=admin_exists)
 
 @app.route('/choose_panel')
 @login_required
@@ -420,14 +450,91 @@ def verify():
     # GET: redirect to home to use the on-page verification form
     return redirect(url_for('index'))
 
+@app.route('/admin_register', methods=['GET', 'POST'])
+def admin_register():
+    # Only allow registration if no admin exists
+    if Admin.query.first():
+        flash('Admin already exists. Please login with existing credentials.')
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        username = request.form['username'].strip()
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        
+        if password != confirm_password:
+            flash('Passwords do not match!')
+            return render_template('admin_register.html')
+        
+        if Admin.query.filter_by(username=username).first():
+            flash('Username already exists!')
+            return render_template('admin_register.html')
+        
+        admin = Admin(
+            username=username,
+            password_hash=generate_password_hash(password)
+        )
+        db.session.add(admin)
+        db.session.commit()
+        flash('Admin registered successfully! Please login.')
+        return redirect(url_for('login'))
+    
+    return render_template('admin_register.html')
+
+@app.route('/admin_management')
+@login_required
+def admin_management():
+    admins = Admin.query.all()
+    return render_template('admin_management.html', admins=admins)
+
+@app.route('/add_admin', methods=['GET', 'POST'])
+@login_required
+def add_admin():
+    if request.method == 'POST':
+        username = request.form['username'].strip()
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        
+        if password != confirm_password:
+            flash('Passwords do not match!')
+            return render_template('add_admin.html')
+        
+        if Admin.query.filter_by(username=username).first():
+            flash('Username already exists!')
+            return render_template('add_admin.html')
+        
+        admin = Admin(
+            username=username,
+            password_hash=generate_password_hash(password)
+        )
+        db.session.add(admin)
+        db.session.commit()
+        flash('New admin added successfully!')
+        return redirect(url_for('admin_management'))
+    
+    return render_template('add_admin.html')
+
+@app.route('/delete_admin/<int:admin_id>')
+@login_required
+def delete_admin(admin_id):
+    admin = Admin.query.get_or_404(admin_id)
+    
+    # Prevent admin from deleting themselves
+    if admin.id == current_user.id:
+        flash('You cannot delete your own account!')
+        return redirect(url_for('admin_management'))
+    
+    # Prevent deletion of the last admin
+    if Admin.query.count() == 1:
+        flash('Cannot delete the last admin!')
+        return redirect(url_for('admin_management'))
+    
+    db.session.delete(admin)
+    db.session.commit()
+    flash('Admin deleted successfully!')
+    return redirect(url_for('admin_management'))
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        if not Admin.query.filter_by(username='admin').first():
-            admin = Admin(
-                username='admin',
-                password_hash=generate_password_hash('admin123')
-            )
-            db.session.add(admin)
-            db.session.commit()
     app.run(debug=True)
